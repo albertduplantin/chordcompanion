@@ -194,79 +194,106 @@ export function getPassingChords(targetChord) {
   const suggestions = [];
 
   // ① Dominante secondaire — V7/X
-  // Accord de dominante construit une quinte JUSTE au-dessus de la cible.
-  // Contient la sensible (7e majeure) de la cible → attraction magnétique.
   const v7Root = Note.simplify(Note.transpose(root, '5P'));
   suggestions.push({
     label: 'V/V',
     category: 'Fonctionnel',
     symbol: `${v7Root}7`,
     tagline: 'Dominante secondaire',
-    description: `Accord 7 construit une quinte au-dessus de ${root}. Sa tierce est la sensible de ${root} : elle "tire" l'oreille vers la résolution. Technique fondamentale du jazz.`,
+    description:
+      `💡 Principe : En musique, chaque accord "veut" aller vers un autre. ` +
+      `${v7Root}7 "veut" aller vers ${root} parce que sa tierce (${Note.simplify(Note.transpose(v7Root, '3M'))}) ` +
+      `est la note sensible de ${root} — elle est à un demi-ton et monte naturellement. ` +
+      `C'est comme tendre un élastique : plus vous le tendez (V7), plus la détente (${root}) est satisfaisante. ` +
+      `\n\n🎹 Comment jouer : placez ${v7Root}7 juste avant ${root}. Écoutez comment il "attire" l'oreille. ` +
+      `C'est la technique n°1 du jazz : transformer n'importe quel accord en point d'arrivée de sa propre dominante.`,
     color: 'blue',
   });
 
   // ② Substitution tritonique — SubV7
-  // Remplace le V7 par un accord à distance de triton (6 demi-tons).
-  // Magie : les notes guides (3e et 7e) sont les mêmes, juste inversées.
-  const subRoot = Note.simplify(Note.transpose(v7Root, '4A')); // triton du V7
+  const subRoot = Note.simplify(Note.transpose(v7Root, '4A'));
   suggestions.push({
     label: 'SubV7',
     category: 'Substitution',
     symbol: `${subRoot}7`,
     tagline: 'Substitution tritonique',
-    description: `Remplace le ${v7Root}7 par son équivalent à distance de triton. Partage exactement les mêmes notes-guides (3e↔7e inversées). Ligne de basse chromatique descendante. Son jazz moderne et "mystérieux".`,
+    description:
+      `💡 Principe : ${subRoot}7 est à exactement 6 demi-tons (un "triton") de ${v7Root}7. ` +
+      `La magie : ces deux accords partagent les mêmes notes-guides — la tierce de l'un devient la septième de l'autre ! ` +
+      `Résultat : ils créent la même tension, mais ${subRoot}7 → ${root} descend chromatiquement (un demi-ton), ` +
+      `ce qui sonne infiniment plus sophistiqué que le V7 classique. ` +
+      `\n\n🎹 Comment jouer : remplacez ${v7Root}7 par ${subRoot}7. La basse descend d'un demi-ton vers ${root}. ` +
+      `C'est le son "jazz moderne" que vous entendez chez Bill Evans ou Herbie Hancock.`,
     color: 'purple',
   });
 
   // ③ Diminué chromatique — dim7
-  // Accord de 7e diminuée un demi-ton sous la cible.
-  // Symétrie parfaite : peut résoudre vers n'importe quelle note.
   const dimRoot = Note.simplify(Note.transpose(root, '-2m'));
   suggestions.push({
     label: 'dim7',
     category: 'Chromatique',
     symbol: `${dimRoot}dim7`,
     tagline: 'Diminué chromatique',
-    description: `7e diminuée un demi-ton sous ${root}. Chacune de ses 4 notes monte d'un demi-ton pour rejoindre l'accord cible. Tension maximale, résolution claire. Très utilisé en blues et gospel.`,
+    description:
+      `💡 Principe : L'accord diminué est symétrique — ses 4 notes sont séparées par exactement 3 demi-tons chacune. ` +
+      `Placé un demi-ton sous ${root}, chacune de ses notes monte d'un demi-ton pour rejoindre une note de ${root}. ` +
+      `C'est comme 4 flèches pointant toutes vers la cible en même temps. Tension extrême, résolution cristalline. ` +
+      `\n\n🎹 Comment jouer : ${dimRoot}dim7 → ${root}. ` +
+      `Essayez de monter chromatiquement F → F#dim7 → G : c'est le passage classique du blues et du gospel. ` +
+      `Jouez-le vite (croche) pour un effet dramatique.`,
     color: 'orange',
   });
 
   // ④ Dominante "Backdoor" — bVII7
-  // Accord de dominante un ton entier en dessous de la cible.
-  // Emprunté au mode Mixolydien/Dorien : résolution par mouvement ascendant doux.
   const bvii7Root = Note.simplify(Note.transpose(root, '-2M'));
   suggestions.push({
     label: 'bVII7',
     category: 'Modal',
     symbol: `${bvii7Root}7`,
     tagline: 'Backdoor dominant',
-    description: `Dominant 7 un ton entier sous ${root}, emprunté au mode Dorien. Résolution "par derrière" (backdoor) : mouvement ascendant doux et bluesy. Signature sonore de la soul, du funk et du jazz modal.`,
+    description:
+      `💡 Principe : Normalement on arrive sur ${root} "par en haut" (avec ${v7Root}7). ` +
+      `Le "backdoor" arrive "par derrière" — un ton entier en dessous, avec ${bvii7Root}7. ` +
+      `Cet accord est emprunté au mode Mixolydien/Dorien : il n'a pas de sensible, donc la résolution est plus douce, ` +
+      `plus "posée", avec un mouvement ascendant de seconde majeure. ` +
+      `\n\n🎹 Comment jouer : ${bvii7Root}7 → ${root}. ` +
+      `C'est le son de la soul et du funk — pensez Ray Charles, Stevie Wonder, ou les ballades de Miles Davis. ` +
+      `Parfait pour finir un morceau avec élégance sans brutalité.`,
     color: 'teal',
   });
 
   // ⑤ Préparation II — ii7
-  // Le ii7 de la cible prépare un mini II-V-I.
-  // Formule magique du jazz : ii7 → V7 → I.
   const ii7Root = Note.simplify(Note.transpose(root, '2M'));
   suggestions.push({
     label: 'ii7',
     category: 'Fonctionnel',
     symbol: `${ii7Root}m7`,
     tagline: 'Préparation II-V',
-    description: `Le ii7 de ${root} pour créer un mini II-V avant la résolution. Enchaîner ${ii7Root}m7 → ${v7Root}7 → ${root} est la formule fondamentale du jazz. Prépare et intensifie la tension.`,
+    description:
+      `💡 Principe : La formule II-V-I (${ii7Root}m7 → ${v7Root}7 → ${root}) est ` +
+      `le moteur harmonique du jazz — on la retrouve dans 90% des standards. ` +
+      `Le ii7 prépare la tension (comme prendre de l'élan), le V7 crée la tension maximale, ` +
+      `et le I la résout. C'est un arc narratif complet : départ → tension → repos. ` +
+      `\n\n🎹 Comment jouer : insérez ${ii7Root}m7, puis jouez ${v7Root}7 juste avant ${root}. ` +
+      `Une fois que vous entendez cette formule, vous la reconnaîtrez partout — et vous pourrez ` +
+      `improviser dessus avec la gamme de ${root} majeur ou le mode Dorien sur ${ii7Root}m7.`,
     color: 'green',
   });
 
   // ⑥ Dominante augmentée — V+7
-  // Comme le V7 mais avec une quinte augmentée (#5).
-  // Le #5 crée une ligne chromatique descendante vers la fondamentale cible.
   suggestions.push({
     label: 'V+7',
     category: 'Altéré',
     symbol: `${v7Root}7#5`,
     tagline: 'Dominante augmentée',
-    description: `Comme le ${v7Root}7 mais avec une quinte augmentée (#5). Le #5 descend chromatiquement pour rejoindre la fondamentale de ${root}. Tension supplémentaire avant la résolution — son très jazz.`,
+    description:
+      `💡 Principe : Comme ${v7Root}7 (dominante classique), mais avec une quinte augmentée ` +
+      `(#5 = un demi-ton au-dessus de la quinte normale). ` +
+      `Ce #5 est instable et "veut" descendre d'un demi-ton pour rejoindre la fondamentale de ${root}. ` +
+      `Vous obtenez une ligne chromatique supplémentaire qui rend la résolution encore plus inévitable. ` +
+      `\n\n🎹 Comment jouer : utilisez ${v7Root}7#5 à la place de ${v7Root}7 pour plus de tension. ` +
+      `C'est un accord "altéré" typique du bebop et du jazz moderne. ` +
+      `Sur ce voicing, essayez d'improviser avec la gamme altérée de ${v7Root} (7e mode de mélodie mineure).`,
     color: 'red',
   });
 

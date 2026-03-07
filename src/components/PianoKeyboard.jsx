@@ -22,18 +22,18 @@ const BLACK_H = 76;
 const OCTAVES = [3, 4, 5];
 
 // ─── Color mapping ────────────────────────────────────────────────────────────
-// Default keys are pure black & white — color only appears on chord/scale notes.
+// type 'chord' → full color fill   |   type 'scale' → dot marker only (key stays ivory/black)
 
 function getKeyColor(pc, chordSymbol, scaleNotes, imProMode) {
   if (chordSymbol) {
     const role = getNoteRole(pc, chordSymbol);
-    if (role === 'root')    return { fill: '#ff5566', glow: true,  textDark: true };
-    if (role === 'third')   return { fill: '#4a9eff', glow: true,  textDark: true };
-    if (role === 'seventh') return { fill: '#4aff8a', glow: true,  textDark: true };
-    if (role === 'other')   return { fill: '#c9a84c', glow: false, textDark: true };
+    if (role === 'root')    return { type: 'chord', fill: '#ff5566', glow: true,  textDark: true };
+    if (role === 'third')   return { type: 'chord', fill: '#4a9eff', glow: true,  textDark: true };
+    if (role === 'seventh') return { type: 'chord', fill: '#4aff8a', glow: true,  textDark: true };
+    if (role === 'other')   return { type: 'chord', fill: '#c9a84c', glow: false, textDark: true };
   }
   if (imProMode && scaleNotes.includes(pc)) {
-    return { fill: 'rgba(201,168,76,0.28)', glow: false, textDark: false };
+    return { type: 'scale', fill: '#c9a84c', glow: false, textDark: false };
   }
   return null;
 }
@@ -42,43 +42,39 @@ function getKeyColor(pc, chordSymbol, scaleNotes, imProMode) {
 
 function WhiteKey({ pc, x, chordSymbol, scaleNotes, imProMode, onClick }) {
   const color = getKeyColor(pc, chordSymbol, scaleNotes, imProMode);
-  const isColored = !!color;
-
-  // Base white key — with subtle gradient for depth
-  const baseFill = isColored ? color.fill : 'url(#whiteKeyGrad)';
+  const isChord = color?.type === 'chord';
+  const isScale = color?.type === 'scale';
 
   return (
     <g onClick={() => onClick?.(pc)} style={{ cursor: 'pointer' }}>
+      {/* Base ivory key — always white/ivory */}
       <rect
-        x={x}
-        y={0}
-        width={KEY_W - 1}
-        height={KEY_H}
-        rx={3}
-        fill={baseFill}
-        stroke="#333"
-        strokeWidth={1}
-        style={color?.glow ? { filter: `drop-shadow(0 0 7px ${color.fill})` } : {}}
+        x={x} y={0} width={KEY_W - 1} height={KEY_H} rx={3}
+        fill={isChord ? color.fill : 'url(#whiteKeyGrad)'}
+        stroke="#444" strokeWidth={1}
+        style={isChord && color.glow ? { filter: `drop-shadow(0 0 8px ${color.fill})` } : {}}
       />
-      {/* Bottom rounded cap for realism */}
+      {/* Bottom rounded cap */}
       <rect
-        x={x + 1}
-        y={KEY_H - 10}
-        width={KEY_W - 3}
-        height={10}
-        rx={3}
-        fill={isColored ? color.fill : '#e8e8e0'}
+        x={x + 1} y={KEY_H - 10} width={KEY_W - 3} height={10} rx={3}
+        fill={isChord ? color.fill : '#e0ddd4'}
         style={{ pointerEvents: 'none' }}
       />
-      {/* Note label — always show C notes, show all when colored */}
-      {(isColored || pc === 'C') && (
+      {/* Scale dot (impro mode) — small amber circle, key stays white */}
+      {isScale && (
+        <circle
+          cx={x + (KEY_W - 1) / 2} cy={KEY_H - 16} r={4}
+          fill="#c9a84c" opacity={0.85}
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+      {/* Note label */}
+      {(isChord || pc === 'C') && (
         <text
-          x={x + (KEY_W - 1) / 2}
-          y={KEY_H - 3}
-          textAnchor="middle"
-          fontSize={7}
-          fontWeight={isColored ? 'bold' : 'normal'}
-          fill={isColored && color.textDark ? '#0d0d0f' : '#888'}
+          x={x + (KEY_W - 1) / 2} y={KEY_H - 3}
+          textAnchor="middle" fontSize={7}
+          fontWeight={isChord ? 'bold' : 'normal'}
+          fill={isChord && color.textDark ? '#0d0d0f' : '#999'}
           style={{ userSelect: 'none', pointerEvents: 'none' }}
         >
           {pc}
@@ -92,52 +88,35 @@ function WhiteKey({ pc, x, chordSymbol, scaleNotes, imProMode, onClick }) {
 
 function BlackKey({ pc, x, chordSymbol, scaleNotes, imProMode, onClick }) {
   const color = getKeyColor(pc, chordSymbol, scaleNotes, imProMode);
-  const isColored = !!color;
+  const isChord = color?.type === 'chord';
+  const isScale = color?.type === 'scale';
 
   return (
     <g onClick={() => onClick?.(pc)} style={{ cursor: 'pointer' }}>
-      {/* Shadow/depth layer */}
+      {/* Shadow depth */}
+      <rect x={x + 1} y={1} width={BLACK_W} height={BLACK_H} rx={2}
+        fill="rgba(0,0,0,0.55)" style={{ pointerEvents: 'none' }} />
+      {/* Key body — always dark unless chord note */}
       <rect
-        x={x + 1}
-        y={1}
-        width={BLACK_W}
-        height={BLACK_H}
-        rx={2}
-        fill="rgba(0,0,0,0.6)"
-        style={{ pointerEvents: 'none' }}
+        x={x} y={0} width={BLACK_W} height={BLACK_H} rx={2}
+        fill={isChord ? color.fill : 'url(#blackKeyGrad)'}
+        stroke="#000" strokeWidth={1}
+        style={isChord && color.glow ? { filter: `drop-shadow(0 0 8px ${color.fill})` } : {}}
       />
-      {/* Main key body */}
-      <rect
-        x={x}
-        y={0}
-        width={BLACK_W}
-        height={BLACK_H}
-        rx={2}
-        fill={isColored ? color.fill : 'url(#blackKeyGrad)'}
-        stroke="#000"
-        strokeWidth={1}
-        style={color?.glow ? { filter: `drop-shadow(0 0 7px ${color.fill})` } : {}}
-      />
-      {/* Highlight strip at top */}
-      {!isColored && (
-        <rect
-          x={x + 3}
-          y={2}
-          width={BLACK_W - 6}
-          height={16}
-          rx={1}
-          fill="rgba(255,255,255,0.07)"
-          style={{ pointerEvents: 'none' }}
-        />
+      {/* Subtle highlight strip on plain black keys */}
+      {!isChord && (
+        <rect x={x + 3} y={2} width={BLACK_W - 6} height={14} rx={1}
+          fill="rgba(255,255,255,0.06)" style={{ pointerEvents: 'none' }} />
       )}
-      {/* Note label when colored */}
-      {isColored && (
-        <text
-          x={x + BLACK_W / 2}
-          y={BLACK_H - 5}
-          textAnchor="middle"
-          fontSize={6}
-          fontWeight="bold"
+      {/* Scale dot (impro mode) */}
+      {isScale && (
+        <circle cx={x + BLACK_W / 2} cy={BLACK_H - 9} r={3.5}
+          fill="#c9a84c" opacity={0.9} style={{ pointerEvents: 'none' }} />
+      )}
+      {/* Label on chord notes */}
+      {isChord && (
+        <text x={x + BLACK_W / 2} y={BLACK_H - 5} textAnchor="middle"
+          fontSize={6} fontWeight="bold"
           fill={color.textDark ? '#0d0d0f' : '#fff'}
           style={{ userSelect: 'none', pointerEvents: 'none' }}
         >

@@ -63,7 +63,7 @@ export default function PassingChords({ targetChord, onInsert }) {
             className="absolute z-50 top-8 left-1/2 -translate-x-1/2
                        bg-[#18181f] border border-jazz-border rounded-2xl shadow-2xl
                        p-4 flex flex-col gap-2"
-            style={{ width: 300 }}
+            style={{ width: 340 }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -143,7 +143,7 @@ export default function PassingChords({ targetChord, onInsert }) {
                       className="px-3 pb-3 pt-2 text-xs leading-relaxed border-t"
                       style={{ background: `${c.bg}cc`, borderColor: c.border, color: '#d1d5db' }}
                     >
-                      <div className="flex items-center gap-1.5 mb-1.5">
+                      <div className="flex items-center gap-1.5 mb-2">
                         <span
                           className="text-xs font-semibold px-2 py-0.5 rounded-full"
                           style={{ background: c.badge + '80', color: c.text }}
@@ -151,7 +151,12 @@ export default function PassingChords({ targetChord, onInsert }) {
                           {s.category}
                         </span>
                       </div>
-                      {s.description}
+                      {s.description.split('\n\n').map((para, pi) => (
+                        <p key={pi} className={`leading-relaxed ${pi > 0 ? 'mt-2 pt-2 border-t border-white/10' : ''}`}
+                          style={{ fontSize: '11px' }}>
+                          {para}
+                        </p>
+                      ))}
                     </div>
                   )}
                 </div>

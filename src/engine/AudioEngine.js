@@ -51,29 +51,27 @@ export async function playProgression(chordVoicings, bpm = 80, onChordChange) {
 
   isPlaying = true;
   Tone.getTransport().bpm.value = bpm;
+  Tone.getTransport().stop();
+  Tone.getTransport().cancel();
 
   const s = getSynth();
-  const beatDuration = '2n'; // one chord = 2 beats
+  // Each chord lasts 2 half-notes (one bar at 4/4)
+  const barSeconds = Tone.Time('1m').toSeconds();
 
-  let index = 0;
-  const loop = new Tone.Sequence(
-    (time) => {
-      if (index >= chordVoicings.length) {
-        loop.stop();
-        isPlaying = false;
-        return;
-      }
-      const voiced = chordVoicings[index];
+  chordVoicings.forEach((voiced, idx) => {
+    const startTime = idx * barSeconds;
+    Tone.getTransport().schedule((time) => {
       const noteNames = voiced.map(n => `${n.pc}${n.octave}`);
-      s.triggerAttackRelease(noteNames, beatDuration, time);
-      if (onChordChange) Tone.getDraw().schedule(() => onChordChange(index), time);
-      index++;
-    },
-    null,
-    '2n'
-  );
+      s.triggerAttackRelease(noteNames, '2n', time);
+      if (onChordChange) Tone.getDraw().schedule(() => onChordChange(idx), time);
+    }, startTime);
+  });
 
-  loop.start(0);
+  // Mark end of playback
+  Tone.getTransport().schedule(() => {
+    Tone.getDraw().schedule(() => { isPlaying = false; }, Tone.now());
+  }, chordVoicings.length * barSeconds);
+
   Tone.getTransport().start();
 }
 
