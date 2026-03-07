@@ -152,11 +152,14 @@ export function closestVoicing(chordSymbol, prevVoicing = []) {
 
 export function getNoteRole(pc, chordSymbol) {
   const meta = getChordMeta(chordSymbol);
-  if (!meta) return 'other';
-  if (Note.chroma(pc) === Note.chroma(meta.root)) return 'root';
-  if (meta.third && Note.chroma(pc) === Note.chroma(meta.third)) return 'third';
-  if (meta.seventh && Note.chroma(pc) === Note.chroma(meta.seventh)) return 'seventh';
-  return 'other';
+  if (!meta) return null;
+  const ch = Note.chroma(pc);
+  if (ch === Note.chroma(meta.root)) return 'root';
+  if (meta.third   && ch === Note.chroma(meta.third))   return 'third';
+  if (meta.seventh && ch === Note.chroma(meta.seventh)) return 'seventh';
+  // 'other' only for notes actually IN the chord (e.g. the 5th)
+  if (meta.notes.some(n => Note.chroma(n) === ch)) return 'other';
+  return null; // note is not part of this chord → no color
 }
 
 // ─── Detect key / tonal center from a chord list ────────────────────────────

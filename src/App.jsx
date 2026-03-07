@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import './App.css';
 
 import ControlPanel from './components/ControlPanel';
@@ -20,6 +20,8 @@ import {
   stopMetronome,
   stopAll,
   setBpm,
+  initSampler,
+  isSamplerLoaded,
 } from './engine/AudioEngine';
 
 // ─── Default progression ──────────────────────────────────────────────────────
@@ -45,6 +47,12 @@ export default function App() {
   const [imProMode, setImProMode] = useState(false);
   const [bpm, setBpmState] = useState(80);
   const [beatIndex, setBeatIndex] = useState(-1);
+  const [samplerReady, setSamplerReady] = useState(false);
+
+  // Preload the Salamander Grand Piano samples on mount
+  useEffect(() => {
+    initSampler(() => setSamplerReady(true));
+  }, []);
 
   const activeChord = progression[activeChordIdx] ?? progression[0];
   const key = detectKey(progression);
@@ -57,6 +65,12 @@ export default function App() {
     setProgression(chords);
     setVoicings(buildVoicings(chords));
     setActiveChordIdx(0);
+  }
+
+  function handleDeleteChord(idx) {
+    if (progression.length <= 1) return;
+    const newProg = progression.filter((_, i) => i !== idx);
+    handleProgressionChange(newProg);
   }
 
   function handleInsertPassingChord(afterIndex, symbol) {
@@ -119,12 +133,20 @@ export default function App() {
           <h1 className="text-lg font-bold tracking-tight text-white leading-none">Piano Vibe</h1>
           <p className="text-xs text-jazz-muted">Chord Companion</p>
         </div>
-        {key && (
-          <div className="ml-auto flex items-center gap-2 text-sm">
-            <span className="text-jazz-muted">Tonalité :</span>
-            <span className="text-jazz-accent font-bold">{key} Majeur</span>
-          </div>
-        )}
+        <div className="ml-auto flex items-center gap-3">
+          {!samplerReady && (
+            <div className="flex items-center gap-2 text-xs text-jazz-muted">
+              <span className="w-2 h-2 rounded-full bg-jazz-accent animate-pulse" />
+              Chargement du piano…
+            </div>
+          )}
+          {key && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-jazz-muted">Tonalité :</span>
+              <span className="text-jazz-accent font-bold">{key} Majeur</span>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* ── Main ── */}
@@ -162,41 +184,57 @@ export default function App() {
               return (
                 <div key={`${chord}-${idx}`} className="flex items-center gap-1">
                   {/* Chord card */}
-                  <button
-                    onClick={() => handleChordClick(idx)}
-                    className={`relative flex flex-col items-center px-4 py-3 rounded-xl border
-                                transition-all duration-150 min-w-[72px]
-                                ${isActive
-                                  ? 'bg-jazz-accent border-jazz-accent text-black shadow-lg shadow-amber-900/40'
-                                  : 'bg-jazz-card border-jazz-border text-white hover:border-jazz-accent'}`}
-                  >
-                    <span className={`font-bold text-base leading-none ${isActive ? 'text-black' : 'text-white'}`}>
-                      {chord}
-                    </span>
+                  <div className="relative group">
+                    <button
+                      onClick={() => handleChordClick(idx)}
+                      className={`relative flex flex-col items-center px-4 py-3 rounded-xl border
+                                  transition-all duration-150 min-w-[72px]
+                                  ${isActive
+                                    ? 'bg-jazz-accent border-jazz-accent text-black shadow-lg shadow-amber-900/40'
+                                    : 'bg-jazz-card border-jazz-border text-white hover:border-jazz-accent'}`}
+                    >
+                      <span className={`font-bold text-base leading-none ${isActive ? 'text-black' : 'text-white'}`}>
+                        {chord}
+                      </span>
 
-                    {/* Voice leading mini dots */}
-                    <div className="flex gap-0.5 mt-2">
-                      {voiced.map((n, ni) => {
-                        const colors = { root: '#ff5566', third: '#4a9eff', seventh: '#4aff8a', other: '#c9a84c' };
-                        // derive role from index
-                        const roles = ['root', 'other', 'third', 'other', 'seventh', 'other', 'other'];
-                        const color = colors[roles[ni] ?? 'other'];
-                        return (
-                          <div
-                            key={ni}
-                            title={`${n.pc}${n.octave}`}
-                            className="w-2 h-2 rounded-full"
-                            style={{ background: isActive ? 'rgba(0,0,0,0.4)' : color }}
-                          />
-                        );
-                      })}
-                    </div>
+                      {/* Voice leading mini dots */}
+                      <div className="flex gap-0.5 mt-2">
+                        {voiced.map((n, ni) => {
+                          const colors = { root: '#ff5566', third: '#4a9eff', seventh: '#4aff8a', other: '#c9a84c' };
+                          const roles = ['root', 'other', 'third', 'other', 'seventh', 'other', 'other'];
+                          const color = colors[roles[ni] ?? 'other'];
+                          return (
+                            <div
+                              key={ni}
+                              title={`${n.pc}${n.octave}`}
+                              className="w-2 h-2 rounded-full"
+                              style={{ background: isActive ? 'rgba(0,0,0,0.4)' : color }}
+                            />
+                          );
+                        })}
+                      </div>
 
-                    {/* Note names (voicing) */}
-                    <div className="text-xs mt-1 opacity-70 tracking-tight">
-                      {voiced.map(n => n.pc).join(' ')}
-                    </div>
-                  </button>
+                      {/* Note names (voicing) */}
+                      <div className="text-xs mt-1 opacity-70 tracking-tight">
+                        {voiced.map(n => n.pc).join(' ')}
+                      </div>
+                    </button>
+
+                    {/* Delete button — visible on hover, hidden if only 1 chord */}
+                    {progression.length > 1 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteChord(idx); }}
+                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full
+                                   bg-red-700 hover:bg-red-500 text-white
+                                   flex items-center justify-center text-xs font-bold
+                                   opacity-0 group-hover:opacity-100 transition-opacity
+                                   shadow-lg z-10"
+                        title="Supprimer cet accord"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
 
                   {/* Passing chord button (after each chord except last) */}
                   {idx < progression.length - 1 && (
