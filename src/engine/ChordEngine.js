@@ -179,9 +179,10 @@ export function getScaleNotes(tonic, scaleName = 'major') {
 // ─── Passing chord suggestions ───────────────────────────────────────────────
 
 /**
- * Returns passing chord options between chordA and chordB.
+ * Returns passing chord suggestions for a target chord.
+ * Each entry includes: label, category, symbol, tagline, description, color.
  * @param {string} targetChord - the chord we're resolving TO
- * @returns {{ label, symbol, description }[]}
+ * @returns {{ label, category, symbol, tagline, description, color }[]}
  */
 export function getPassingChords(targetChord) {
   const target = Chord.get(targetChord);
@@ -190,36 +191,83 @@ export function getPassingChords(targetChord) {
   const root = target.tonic; // e.g. 'G'
   if (!root) return [];
 
-  const rootMidi = Note.midi(`${root}4`) ?? 60;
   const suggestions = [];
 
-  // 1. Secondary dominant: V7 of target  (a perfect 5th above target root)
-  const secDomRoot = Note.transpose(root, '5P'); // e.g. D for G target
-  const secDomSymbol = `${secDomRoot}7`;
+  // ① Dominante secondaire — V7/X
+  // Accord de dominante construit une quinte JUSTE au-dessus de la cible.
+  // Contient la sensible (7e majeure) de la cible → attraction magnétique.
+  const v7Root = Note.simplify(Note.transpose(root, '5P'));
   suggestions.push({
     label: 'V/V',
-    symbol: secDomSymbol,
-    description: `Dominante secondaire — résout vers ${root}`,
+    category: 'Fonctionnel',
+    symbol: `${v7Root}7`,
+    tagline: 'Dominante secondaire',
+    description: `Accord 7 construit une quinte au-dessus de ${root}. Sa tierce est la sensible de ${root} : elle "tire" l'oreille vers la résolution. Technique fondamentale du jazz.`,
+    color: 'blue',
   });
 
-  // 2. Tritone substitution: dom7 a tritone away (b2 of target)
-  const tritoneRoot = Note.transpose(root, '2m'); // half step above = b9 of target root
-  // Actually tritone sub is b5 interval = augmented 4th above = tritone away
-  const tritoneSub = Note.transpose(root, '4A'); // e.g. Db for G
-  const tritoneSymbol = `${Note.simplify(tritoneSub)}7`;
+  // ② Substitution tritonique — SubV7
+  // Remplace le V7 par un accord à distance de triton (6 demi-tons).
+  // Magie : les notes guides (3e et 7e) sont les mêmes, juste inversées.
+  const subRoot = Note.simplify(Note.transpose(v7Root, '4A')); // triton du V7
   suggestions.push({
     label: 'SubV7',
-    symbol: tritoneSymbol,
-    description: `Substitution tritonique — résout vers ${root}`,
+    category: 'Substitution',
+    symbol: `${subRoot}7`,
+    tagline: 'Substitution tritonique',
+    description: `Remplace le ${v7Root}7 par son équivalent à distance de triton. Partage exactement les mêmes notes-guides (3e↔7e inversées). Ligne de basse chromatique descendante. Son jazz moderne et "mystérieux".`,
+    color: 'purple',
   });
 
-  // 3. Diminished passing chord: half step below target root
-  const dimRoot = Note.transpose(root, '-2m'); // chromatic below
-  const dimSymbol = `${Note.simplify(dimRoot)}dim7`;
+  // ③ Diminué chromatique — dim7
+  // Accord de 7e diminuée un demi-ton sous la cible.
+  // Symétrie parfaite : peut résoudre vers n'importe quelle note.
+  const dimRoot = Note.simplify(Note.transpose(root, '-2m'));
   suggestions.push({
     label: 'dim7',
-    symbol: dimSymbol,
-    description: `Accord diminué chromatique → ${root}`,
+    category: 'Chromatique',
+    symbol: `${dimRoot}dim7`,
+    tagline: 'Diminué chromatique',
+    description: `7e diminuée un demi-ton sous ${root}. Chacune de ses 4 notes monte d'un demi-ton pour rejoindre l'accord cible. Tension maximale, résolution claire. Très utilisé en blues et gospel.`,
+    color: 'orange',
+  });
+
+  // ④ Dominante "Backdoor" — bVII7
+  // Accord de dominante un ton entier en dessous de la cible.
+  // Emprunté au mode Mixolydien/Dorien : résolution par mouvement ascendant doux.
+  const bvii7Root = Note.simplify(Note.transpose(root, '-2M'));
+  suggestions.push({
+    label: 'bVII7',
+    category: 'Modal',
+    symbol: `${bvii7Root}7`,
+    tagline: 'Backdoor dominant',
+    description: `Dominant 7 un ton entier sous ${root}, emprunté au mode Dorien. Résolution "par derrière" (backdoor) : mouvement ascendant doux et bluesy. Signature sonore de la soul, du funk et du jazz modal.`,
+    color: 'teal',
+  });
+
+  // ⑤ Préparation II — ii7
+  // Le ii7 de la cible prépare un mini II-V-I.
+  // Formule magique du jazz : ii7 → V7 → I.
+  const ii7Root = Note.simplify(Note.transpose(root, '2M'));
+  suggestions.push({
+    label: 'ii7',
+    category: 'Fonctionnel',
+    symbol: `${ii7Root}m7`,
+    tagline: 'Préparation II-V',
+    description: `Le ii7 de ${root} pour créer un mini II-V avant la résolution. Enchaîner ${ii7Root}m7 → ${v7Root}7 → ${root} est la formule fondamentale du jazz. Prépare et intensifie la tension.`,
+    color: 'green',
+  });
+
+  // ⑥ Dominante augmentée — V+7
+  // Comme le V7 mais avec une quinte augmentée (#5).
+  // Le #5 crée une ligne chromatique descendante vers la fondamentale cible.
+  suggestions.push({
+    label: 'V+7',
+    category: 'Altéré',
+    symbol: `${v7Root}7#5`,
+    tagline: 'Dominante augmentée',
+    description: `Comme le ${v7Root}7 mais avec une quinte augmentée (#5). Le #5 descend chromatiquement pour rejoindre la fondamentale de ${root}. Tension supplémentaire avant la résolution — son très jazz.`,
+    color: 'red',
   });
 
   return suggestions;

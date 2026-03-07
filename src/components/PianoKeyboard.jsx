@@ -22,17 +22,18 @@ const BLACK_H = 76;
 const OCTAVES = [3, 4, 5];
 
 // ─── Color mapping ────────────────────────────────────────────────────────────
+// Default keys are pure black & white — color only appears on chord/scale notes.
 
 function getKeyColor(pc, chordSymbol, scaleNotes, imProMode) {
   if (chordSymbol) {
     const role = getNoteRole(pc, chordSymbol);
-    if (role === 'root')    return { fill: '#ff5566', glow: true };
-    if (role === 'third')   return { fill: '#4a9eff', glow: true };
-    if (role === 'seventh') return { fill: '#4aff8a', glow: true };
-    if (role === 'other')   return { fill: '#c9a84c', glow: false };
+    if (role === 'root')    return { fill: '#ff5566', glow: true,  textDark: true };
+    if (role === 'third')   return { fill: '#4a9eff', glow: true,  textDark: true };
+    if (role === 'seventh') return { fill: '#4aff8a', glow: true,  textDark: true };
+    if (role === 'other')   return { fill: '#c9a84c', glow: false, textDark: true };
   }
   if (imProMode && scaleNotes.includes(pc)) {
-    return { fill: 'rgba(201,168,76,0.35)', glow: false };
+    return { fill: 'rgba(201,168,76,0.28)', glow: false, textDark: false };
   }
   return null;
 }
@@ -41,7 +42,10 @@ function getKeyColor(pc, chordSymbol, scaleNotes, imProMode) {
 
 function WhiteKey({ pc, x, chordSymbol, scaleNotes, imProMode, onClick }) {
   const color = getKeyColor(pc, chordSymbol, scaleNotes, imProMode);
-  const isSharp = false;
+  const isColored = !!color;
+
+  // Base white key — with subtle gradient for depth
+  const baseFill = isColored ? color.fill : 'url(#whiteKeyGrad)';
 
   return (
     <g onClick={() => onClick?.(pc)} style={{ cursor: 'pointer' }}>
@@ -51,24 +55,35 @@ function WhiteKey({ pc, x, chordSymbol, scaleNotes, imProMode, onClick }) {
         width={KEY_W - 1}
         height={KEY_H}
         rx={3}
-        fill={color ? color.fill : '#f0ece0'}
-        stroke="#1a1a1f"
+        fill={baseFill}
+        stroke="#333"
         strokeWidth={1}
-        style={color?.glow ? {
-          filter: `drop-shadow(0 0 6px ${color.fill})`,
-        } : {}}
+        style={color?.glow ? { filter: `drop-shadow(0 0 7px ${color.fill})` } : {}}
       />
-      {/* Note label */}
-      <text
-        x={x + (KEY_W - 1) / 2}
-        y={KEY_H - 8}
-        textAnchor="middle"
-        fontSize={8}
-        fill={color ? '#0d0d0f' : '#6b7280'}
-        style={{ userSelect: 'none', pointerEvents: 'none' }}
-      >
-        {pc}
-      </text>
+      {/* Bottom rounded cap for realism */}
+      <rect
+        x={x + 1}
+        y={KEY_H - 10}
+        width={KEY_W - 3}
+        height={10}
+        rx={3}
+        fill={isColored ? color.fill : '#e8e8e0'}
+        style={{ pointerEvents: 'none' }}
+      />
+      {/* Note label — always show C notes, show all when colored */}
+      {(isColored || pc === 'C') && (
+        <text
+          x={x + (KEY_W - 1) / 2}
+          y={KEY_H - 3}
+          textAnchor="middle"
+          fontSize={7}
+          fontWeight={isColored ? 'bold' : 'normal'}
+          fill={isColored && color.textDark ? '#0d0d0f' : '#888'}
+          style={{ userSelect: 'none', pointerEvents: 'none' }}
+        >
+          {pc}
+        </text>
+      )}
     </g>
   );
 }
@@ -77,29 +92,53 @@ function WhiteKey({ pc, x, chordSymbol, scaleNotes, imProMode, onClick }) {
 
 function BlackKey({ pc, x, chordSymbol, scaleNotes, imProMode, onClick }) {
   const color = getKeyColor(pc, chordSymbol, scaleNotes, imProMode);
+  const isColored = !!color;
 
   return (
-    <g onClick={() => onClick?.(pc)} style={{ cursor: 'pointer', zIndex: 10 }}>
+    <g onClick={() => onClick?.(pc)} style={{ cursor: 'pointer' }}>
+      {/* Shadow/depth layer */}
+      <rect
+        x={x + 1}
+        y={1}
+        width={BLACK_W}
+        height={BLACK_H}
+        rx={2}
+        fill="rgba(0,0,0,0.6)"
+        style={{ pointerEvents: 'none' }}
+      />
+      {/* Main key body */}
       <rect
         x={x}
         y={0}
         width={BLACK_W}
         height={BLACK_H}
         rx={2}
-        fill={color ? color.fill : '#1a1a1f'}
-        stroke="#0d0d0f"
+        fill={isColored ? color.fill : 'url(#blackKeyGrad)'}
+        stroke="#000"
         strokeWidth={1}
-        style={color?.glow ? {
-          filter: `drop-shadow(0 0 6px ${color.fill})`,
-        } : {}}
+        style={color?.glow ? { filter: `drop-shadow(0 0 7px ${color.fill})` } : {}}
       />
-      {color && (
+      {/* Highlight strip at top */}
+      {!isColored && (
+        <rect
+          x={x + 3}
+          y={2}
+          width={BLACK_W - 6}
+          height={16}
+          rx={1}
+          fill="rgba(255,255,255,0.07)"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+      {/* Note label when colored */}
+      {isColored && (
         <text
           x={x + BLACK_W / 2}
-          y={BLACK_H - 6}
+          y={BLACK_H - 5}
           textAnchor="middle"
-          fontSize={7}
-          fill="#0d0d0f"
+          fontSize={6}
+          fontWeight="bold"
+          fill={color.textDark ? '#0d0d0f' : '#fff'}
           style={{ userSelect: 'none', pointerEvents: 'none' }}
         >
           {pc}
@@ -165,8 +204,25 @@ export default function PianoKeyboard({ chordSymbol, scaleNotes = [], imProMode 
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
         style={{ display: 'block', margin: '0 auto' }}
       >
+        <defs>
+          {/* White key gradient: ivory top, slightly warmer bottom */}
+          <linearGradient id="whiteKeyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#f9f9f6" />
+            <stop offset="85%"  stopColor="#f0ede4" />
+            <stop offset="100%" stopColor="#e8e4d8" />
+          </linearGradient>
+          {/* Black key gradient: deep black with subtle sheen */}
+          <linearGradient id="blackKeyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#2a2a2a" />
+            <stop offset="20%"  stopColor="#111111" />
+            <stop offset="100%" stopColor="#050505" />
+          </linearGradient>
+        </defs>
+
         {/* Background */}
         <rect width={svgWidth} height={svgHeight} fill="#0d0d0f" rx={8} />
+        {/* Piano body/fallboard top edge */}
+        <rect x={0} y={9} width={svgWidth} height={4} fill="#1a1a1f" />
 
         {/* White keys (rendered first, below black) */}
         <g transform="translate(0, 10)">
