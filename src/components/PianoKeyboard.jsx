@@ -6,6 +6,7 @@
 
 import { Note } from 'tonal';
 import { getNoteRole } from '../engine/ChordEngine';
+import Tooltip from './Tooltip';
 
 // ─── Key layout for one octave ────────────────────────────────────────────────
 
@@ -21,19 +22,27 @@ const BLACK_W = 18;
 const BLACK_H = 76;
 const OCTAVES = [3, 4, 5];
 
+// ─── Harmonious color palette (equal saturation ~55%, lightness ~60%) ─────────
+// Hues spaced ~50° apart on the color wheel for visual balance.
+// Each color works on both white and black key backgrounds.
+export const NOTE_COLORS = {
+  root:    { fill: '#D96060', glow: true,  textDark: false }, // warm coral-red   (0°)
+  third:   { fill: '#5B8FD4', glow: true,  textDark: false }, // steel blue       (214°)
+  seventh: { fill: '#45A882', glow: true,  textDark: false }, // jade green       (158°)
+  fifth:   { fill: '#C49040', glow: false, textDark: false }, // antique amber    (36°)
+  scale:   { fill: '#A07830', glow: false, textDark: false }, // dark amber dot
+};
+
 // ─── Color mapping ────────────────────────────────────────────────────────────
-// type 'chord' → full color fill   |   type 'scale' → dot marker only (key stays ivory/black)
+// type 'chord' → full color fill   |   type 'scale' → dot marker only
 
 function getKeyColor(pc, chordSymbol, scaleNotes, imProMode) {
   if (chordSymbol) {
     const role = getNoteRole(pc, chordSymbol);
-    if (role === 'root')    return { type: 'chord', fill: '#ff5566', glow: true,  textDark: true };
-    if (role === 'third')   return { type: 'chord', fill: '#4a9eff', glow: true,  textDark: true };
-    if (role === 'seventh') return { type: 'chord', fill: '#4aff8a', glow: true,  textDark: true };
-    if (role === 'other')   return { type: 'chord', fill: '#c9a84c', glow: false, textDark: true };
+    if (role && NOTE_COLORS[role]) return { type: 'chord', ...NOTE_COLORS[role] };
   }
   if (imProMode && scaleNotes.includes(pc)) {
-    return { type: 'scale', fill: '#c9a84c', glow: false, textDark: false };
+    return { type: 'scale', ...NOTE_COLORS.scale };
   }
   return null;
 }
@@ -229,23 +238,19 @@ export default function PianoKeyboard({ chordSymbol, scaleNotes = [], imProMode 
       </svg>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-3 justify-center text-xs text-gray-500">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full inline-block" style={{ background: '#ff5566' }} />
-          Fondamentale
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full inline-block" style={{ background: '#4a9eff' }} />
-          Tierce
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full inline-block" style={{ background: '#4aff8a' }} />
-          Septième
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full inline-block" style={{ background: '#c9a84c' }} />
-          Autre
-        </span>
+      <div className="flex items-center gap-4 mt-3 justify-center text-xs text-gray-500 flex-wrap">
+        {[
+          { role: 'root',    label: 'Fondamentale' },
+          { role: 'third',   label: 'Tierce' },
+          { role: 'seventh', label: 'Septième' },
+          { role: 'fifth',   label: 'Quinte' },
+        ].map(({ role, label }) => (
+          <span key={role} className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full inline-block flex-shrink-0"
+              style={{ background: NOTE_COLORS[role].fill }} />
+            <Tooltip term={label}>{label}</Tooltip>
+          </span>
+        ))}
       </div>
     </div>
   );

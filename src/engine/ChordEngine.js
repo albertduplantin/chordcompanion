@@ -157,8 +157,8 @@ export function getNoteRole(pc, chordSymbol) {
   if (ch === Note.chroma(meta.root)) return 'root';
   if (meta.third   && ch === Note.chroma(meta.third))   return 'third';
   if (meta.seventh && ch === Note.chroma(meta.seventh)) return 'seventh';
-  // 'other' only for notes actually IN the chord (e.g. the 5th)
-  if (meta.notes.some(n => Note.chroma(n) === ch)) return 'other';
+  // 'fifth' for notes actually IN the chord but not root/third/seventh (e.g. the 5th, 9th...)
+  if (meta.notes.some(n => Note.chroma(n) === ch)) return 'fifth';
   return null; // note is not part of this chord → no color
 }
 

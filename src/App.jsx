@@ -4,6 +4,8 @@ import './App.css';
 import ControlPanel from './components/ControlPanel';
 import PianoKeyboard from './components/PianoKeyboard';
 import PassingChords from './components/PassingChords';
+import Tooltip from './components/Tooltip';
+import { NOTE_COLORS } from './components/PianoKeyboard';
 
 import {
   parseProgression,
@@ -268,7 +270,9 @@ export default function App() {
               <div className="text-xs text-purple-400 border border-purple-700 bg-purple-900/30
                               rounded-lg px-3 py-1.5 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                Mode Impro — Gamme {key} Majeur
+                <Tooltip term="Mode Impro" side="bottom">
+                  <span>Mode Impro — Gamme {key} Majeur</span>
+                </Tooltip>
               </div>
             )}
           </div>
@@ -281,24 +285,33 @@ export default function App() {
 
           {/* Guide tones info */}
           {chordMeta && (
-            <div className="flex gap-4 mt-4 text-sm flex-wrap">
+            <div className="flex gap-5 mt-4 text-sm flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="text-jazz-muted">Fondamentale :</span>
-                <span className="font-bold text-white">{chordMeta.root}</span>
+                <span className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ background: NOTE_COLORS.root.fill }} />
+                <Tooltip term="Fondamentale">
+                  <span className="text-jazz-muted">Fondamentale</span>
+                </Tooltip>
+                <span className="font-bold text-white ml-1">{chordMeta.root}</span>
               </div>
               {chordMeta.third && (
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span className="text-jazz-muted">Tierce :</span>
-                  <span className="font-bold text-white">{chordMeta.third}</span>
+                  <span className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ background: NOTE_COLORS.third.fill }} />
+                  <Tooltip term="Tierce">
+                    <span className="text-jazz-muted">Tierce</span>
+                  </Tooltip>
+                  <span className="font-bold text-white ml-1">{chordMeta.third}</span>
                 </div>
               )}
               {chordMeta.seventh && (
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="text-jazz-muted">Septième :</span>
-                  <span className="font-bold text-white">{chordMeta.seventh}</span>
+                  <span className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ background: NOTE_COLORS.seventh.fill }} />
+                  <Tooltip term="Septième">
+                    <span className="text-jazz-muted">Septième</span>
+                  </Tooltip>
+                  <span className="font-bold text-white ml-1">{chordMeta.seventh}</span>
                 </div>
               )}
             </div>
@@ -311,21 +324,28 @@ export default function App() {
             {
               color: 'border-blue-800 bg-blue-950/30',
               title: 'Conduite des voix',
-              text: 'Les voicings s\'enchaînent pour minimiser le mouvement des doigts. Les points sous chaque accord montrent la position dans l\'octave.',
+              tooltip: 'Conduite des voix',
+              text: 'Les voicings s\'enchaînent pour minimiser le mouvement des doigts. Survolez les accords pour voir le renversement calculé automatiquement.',
             },
             {
               color: 'border-amber-800 bg-amber-950/30',
               title: 'Notes guides',
-              text: 'Rouge = fondamentale, Bleu = tierce, Vert = septième. Finissez vos phrases impro sur la tierce ou septième pour un son pro.',
+              tooltip: null,
+              text: 'Fondamentale (rouge) · Tierce (bleu) · Septième (jade) · Quinte (ambre). Finissez vos phrases impro sur la tierce ou septième pour sonner jazz.',
             },
             {
               color: 'border-purple-800 bg-purple-950/30',
               title: 'Accords de passage',
-              text: 'Cliquez "+" entre deux accords pour insérer une dominante secondaire, une substitution tritonique ou un accord diminué.',
+              tooltip: null,
+              text: 'Cliquez « + » entre deux accords pour 6 suggestions : dominante secondaire, substitution tritonique, diminué, backdoor, II-V, augmenté.',
             },
           ].map(tip => (
             <div key={tip.title} className={`rounded-xl border p-4 ${tip.color}`}>
-              <p className="font-semibold text-sm mb-1">{tip.title}</p>
+              <p className="font-semibold text-sm mb-1">
+                {tip.tooltip
+                  ? <Tooltip term={tip.tooltip}>{tip.title}</Tooltip>
+                  : tip.title}
+              </p>
               <p className="text-xs text-jazz-muted leading-relaxed">{tip.text}</p>
             </div>
           ))}

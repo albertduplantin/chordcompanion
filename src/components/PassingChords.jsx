@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { Plus, X, BookOpen } from 'lucide-react';
 import { getPassingChords } from '../engine/ChordEngine';
+import Tooltip from './Tooltip';
 
 // Color palette per type
 const COLOR_MAP = {
@@ -148,7 +149,7 @@ export default function PassingChords({ targetChord, onInsert }) {
                           className="text-xs font-semibold px-2 py-0.5 rounded-full"
                           style={{ background: c.badge + '80', color: c.text }}
                         >
-                          {s.category}
+                          <Tooltip term={s.tagline} side="bottom">{s.category}</Tooltip>
                         </span>
                       </div>
                       {s.description.split('\n\n').map((para, pi) => (
