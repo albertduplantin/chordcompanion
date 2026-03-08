@@ -5,6 +5,7 @@ import ControlPanel from './components/ControlPanel';
 import PianoKeyboard from './components/PianoKeyboard';
 import PassingChords from './components/PassingChords';
 import Tooltip from './components/Tooltip';
+import ProgressionLibrary from './components/ProgressionLibrary';
 import { NOTE_COLORS } from './components/PianoKeyboard';
 
 import {
@@ -49,7 +50,9 @@ export default function App() {
   const [imProMode, setImProMode] = useState(false);
   const [bpm, setBpmState] = useState(80);
   const [beatIndex, setBeatIndex] = useState(-1);
-  const [samplerReady, setSamplerReady] = useState(false);
+  const [samplerReady, setSamplerReady]       = useState(false);
+  const [libraryOpen, setLibraryOpen]         = useState(false);
+  const [progressionInput, setProgressionInput] = useState('Cmaj7 Am7 Dm7 G7');
 
   // Preload the Salamander Grand Piano samples on mount
   useEffect(() => {
@@ -157,11 +160,17 @@ export default function App() {
         {/* Control Panel */}
         <section className="bg-jazz-surface border border-jazz-border rounded-2xl p-5">
           <ControlPanel
-            onProgressionChange={handleProgressionChange}
+            onProgressionChange={(chords, raw) => {
+              handleProgressionChange(chords);
+              if (raw !== undefined) setProgressionInput(raw);
+            }}
             onPlay={handlePlay}
             onStop={handleStop}
             onMetronomeToggle={handleMetronomeToggle}
             onImProModeToggle={() => setImProMode(v => !v)}
+            onOpenLibrary={() => setLibraryOpen(v => !v)}
+            libraryOpen={libraryOpen}
+            progressionInput={progressionInput}
             isPlaying={isPlaying}
             metronomeOn={metronomeOn}
             imProMode={imProMode}
@@ -170,6 +179,17 @@ export default function App() {
             beatIndex={beatIndex}
           />
         </section>
+
+        {/* Progression library — inline, no modal */}
+        {libraryOpen && (
+          <ProgressionLibrary
+            onSelect={(chordsString) => {
+              setProgressionInput(chordsString);
+              handleProgressionChange(parseProgression(chordsString));
+            }}
+            onClose={() => setLibraryOpen(false)}
+          />
+        )}
 
         {/* Chord progression strip */}
         <section className="bg-jazz-surface border border-jazz-border rounded-2xl p-5">
