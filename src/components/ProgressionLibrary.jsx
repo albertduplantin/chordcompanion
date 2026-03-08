@@ -13,6 +13,7 @@ const CATEGORY_COLORS = {
   'Bossa Nova': 'bg-green-900/50 border-green-700 text-green-300',
   Blues:      'bg-orange-900/50 border-orange-700 text-orange-300',
   Pop:        'bg-purple-900/50 border-purple-700 text-purple-300',
+  'Pop 70s':  'bg-pink-900/50  border-pink-700  text-pink-300',
 };
 
 const CATEGORY_DOT = {
@@ -20,6 +21,7 @@ const CATEGORY_DOT = {
   'Bossa Nova': 'bg-green-400',
   Blues:      'bg-orange-400',
   Pop:        'bg-purple-400',
+  'Pop 70s':  'bg-pink-400',
 };
 
 export default function ProgressionLibrary({ onSelect, onClose }) {

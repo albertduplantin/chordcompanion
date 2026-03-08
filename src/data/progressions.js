@@ -144,6 +144,96 @@ export const PROGRESSION_LIBRARY = [
     example: 'Hit the Road Jack — Ray Charles',
     youtubeUrl: 'https://www.youtube.com/results?search_query=hit+the+road+jack+ray+charles+original',
   },
+
+  // ── Pop 70s ───────────────────────────────────────────────────────────────
+  {
+    id: '70s-hotel-california',
+    name: 'Hotel California',
+    chords: 'Bm F#7 A E G D Em F#7',
+    category: 'Pop 70s',
+    style: 'Rock · Pop californienne',
+    description:
+      'La progression d\'accords de la chanson emblématique des Eagles (1977). Elle alterne entre mineur et majeur sur un cycle descendant, donnant ce sentiment de mélancolie rêveuse. Les Eagles alternent guitares acoustique et électrique sur cette base.',
+    example: 'Hotel California — Eagles (1977)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=hotel+california+eagles+1977+original',
+  },
+  {
+    id: '70s-dont-stop-me',
+    name: 'I–IV–V Pop-Rock 70s',
+    chords: 'C F G F',
+    category: 'Pop 70s',
+    style: 'Rock · Pop · Glam',
+    description:
+      'La progression I–IV–V est le moteur de tout le rock des années 70. Simple, efficace, elle permet de jouer des centaines de tubes. On la retrouve chez Queen, David Bowie, Elton John — souvent agrémentée de accords de passage pour la rendre plus riche.',
+    example: 'Don\'t Stop Me Now — Queen (1978)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dont+stop+me+now+queen+1978',
+  },
+  {
+    id: '70s-elton-piano-man',
+    name: 'Descente de basse (Piano Man)',
+    chords: 'C Cmaj7 C7 F Am D7 G G7',
+    category: 'Pop 70s',
+    style: 'Pop · Piano · Ballade',
+    description:
+      'Une descente chromatique à la basse (Do–Si–Sib–La) maintient le même accord en changeant uniquement la basse. C\'est la technique pianistique signature d\'Elton John et Billy Joel dans leurs ballades des années 70.',
+    example: 'Piano Man — Billy Joel (1973)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=piano+man+billy+joel+1973+original',
+  },
+  {
+    id: '70s-soul-imi-vi-iv',
+    name: 'Soul 70s i–VII–VI–VII',
+    chords: 'Am G F G',
+    category: 'Pop 70s',
+    style: 'Soul · Funk · Disco',
+    description:
+      'La progression mineure i–VII–VI–VII est omniprésente dans la soul et le funk des années 70. Elle donne une couleur modale douce (mode éolien) sans résolution trop marquée, parfaite pour groover en boucle.',
+    example: 'Superstition — Stevie Wonder (1972)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=superstition+stevie+wonder+1972+original',
+  },
+  {
+    id: '70s-abba',
+    name: 'I–V–vi–iii–IV (ABBA)',
+    chords: 'C G Am Em F',
+    category: 'Pop 70s',
+    style: 'Pop · Variété · Europop',
+    description:
+      'L\'accord iii (Em ici) est la signature harmonique d\'ABBA et de la pop européenne des années 70. Il crée une couleur lumineuse et mélancolique à la fois, entre majeur et mineur. Très utilisé dans les ballades de l\'époque.',
+    example: 'The Winner Takes It All — ABBA (1980)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=winner+takes+it+all+abba+original',
+  },
+  {
+    id: '70s-disco',
+    name: 'Disco i–iv–i–V',
+    chords: 'Am Dm Am E7',
+    category: 'Pop 70s',
+    style: 'Disco · Funk · Dance',
+    description:
+      'La progression mineure classique du disco. Le bassiste joue sur le temps, le guitariste en rythme syncopé ("chic strum"). Cette formule, popularisée par Chic et Donna Summer, est la base de toute la dance music jusqu\'à aujourd\'hui.',
+    example: 'Le Freak — Chic (1978)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=le+freak+chic+1978+original',
+  },
+  {
+    id: '70s-soft-rock',
+    name: 'Soft Rock I–IV–I–V',
+    chords: 'Dmaj7 Gmaj7 Dmaj7 A7',
+    category: 'Pop 70s',
+    style: 'Soft Rock · AOR · Ballad',
+    description:
+      'L\'ajout de la septième majeure (maj7) transforme les accords simples en quelque chose de plus sophistiqué et chaleureux, typique du "soft rock" américain des années 70. Carpenters, Chicago, America utilisaient abondamment cette couleur.',
+    example: 'We\'ve Only Just Begun — The Carpenters (1970)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=weve+only+just+begun+carpenters+1970',
+  },
+  {
+    id: '70s-prog',
+    name: 'Prog Rock (modale)',
+    chords: 'Dm C Bb C Dm',
+    category: 'Pop 70s',
+    style: 'Rock progressif · Psychédélique',
+    description:
+      'Le mode dorien (mineur avec la sixte majeure) est la couleur harmonique du rock progressif des années 70. La basse de Dm oscille avec C et Bb pour créer une atmosphère à la fois sombre et épique, signature de Pink Floyd ou Yes.',
+    example: 'Comfortably Numb — Pink Floyd (1979)',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=comfortably+numb+pink+floyd+1979+original',
+  },
 ];
 
-export const CATEGORIES = ['Tous', 'Jazz', 'Bossa Nova', 'Blues', 'Pop'];
+export const CATEGORIES = ['Tous', 'Jazz', 'Bossa Nova', 'Blues', 'Pop', 'Pop 70s'];
