@@ -6,6 +6,7 @@ import PianoKeyboard from './components/PianoKeyboard';
 import PassingChords from './components/PassingChords';
 import Tooltip from './components/Tooltip';
 import ProgressionLibrary from './components/ProgressionLibrary';
+import HarmonicJourney from './components/HarmonicJourney';
 import { NOTE_COLORS } from './components/PianoKeyboard';
 
 import {
@@ -50,8 +51,9 @@ export default function App() {
   const [imProMode, setImProMode] = useState(false);
   const [bpm, setBpmState] = useState(80);
   const [beatIndex, setBeatIndex] = useState(-1);
-  const [samplerReady, setSamplerReady]       = useState(false);
-  const [libraryOpen, setLibraryOpen]         = useState(false);
+  const [samplerReady, setSamplerReady]         = useState(false);
+  const [libraryOpen, setLibraryOpen]           = useState(false);
+  const [journeyOpen, setJourneyOpen]           = useState(false);
   const [progressionInput, setProgressionInput] = useState('Cmaj7 Am7 Dm7 G7');
 
   // Preload the Salamander Grand Piano samples on mount
@@ -191,11 +193,39 @@ export default function App() {
           />
         )}
 
+        {/* Harmonic Journey */}
+        {journeyOpen && progression.length >= 2 && (
+          <HarmonicJourney
+            fromChord={progression[0]}
+            toChord={progression[progression.length - 1]}
+            onLoadRoute={(chords) => {
+              const joined = chords.join(' ');
+              setProgressionInput(joined);
+              handleProgressionChange(chords);
+            }}
+            onClose={() => setJourneyOpen(false)}
+          />
+        )}
+
         {/* Chord progression strip */}
         <section className="bg-jazz-surface border border-jazz-border rounded-2xl p-5">
-          <p className="text-xs text-jazz-muted uppercase tracking-widest font-semibold mb-4">
-            Progression — cliquer un accord pour l'entendre
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs text-jazz-muted uppercase tracking-widest font-semibold">
+              Progression — cliquer un accord pour l'entendre
+            </p>
+            {progression.length >= 2 && (
+              <button
+                onClick={() => setJourneyOpen(v => !v)}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border
+                            transition-colors font-medium
+                            ${journeyOpen
+                              ? 'bg-purple-600 border-purple-500 text-white'
+                              : 'bg-jazz-card border-jazz-border text-jazz-muted hover:text-purple-400 hover:border-purple-600'}`}
+              >
+                ✦ Voyage harmonique
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center flex-wrap gap-1">
             {progression.map((chord, idx) => {
