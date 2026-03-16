@@ -234,17 +234,31 @@ function scoreRoute(route) {
  * This prevents all routes from converging to the same ii-V ending.
  */
 function diversifyRoutes(routes, maxRoutes, maxPerSuffix = 2) {
-  const groups = new Map();
+  // First pass: max maxPerSuffix routes per last intermediate chord
+  const byLast = new Map();
   for (const route of routes) {
     const intermediates = route.chords.slice(1, -1);
-    // Key on last 2 intermediate chords (or all if fewer)
-    const suffix = intermediates.slice(-2).join('|');
-    if (!groups.has(suffix)) groups.set(suffix, []);
-    groups.get(suffix).push(route);
+    const lastKey = intermediates[intermediates.length - 1] ?? '';
+    if (!byLast.has(lastKey)) byLast.set(lastKey, []);
+    byLast.get(lastKey).push(route);
+  }
+
+  const afterFirstPass = [];
+  for (const group of byLast.values()) {
+    afterFirstPass.push(...group.slice(0, maxPerSuffix));
+  }
+
+  // Second pass: among survivors, max maxPerSuffix routes per last-2 suffix
+  const byLast2 = new Map();
+  for (const route of afterFirstPass) {
+    const intermediates = route.chords.slice(1, -1);
+    const key = intermediates.slice(-2).join('|');
+    if (!byLast2.has(key)) byLast2.set(key, []);
+    byLast2.get(key).push(route);
   }
 
   const result = [];
-  for (const group of groups.values()) {
+  for (const group of byLast2.values()) {
     result.push(...group.slice(0, maxPerSuffix));
   }
 
