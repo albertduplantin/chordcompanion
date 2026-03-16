@@ -7,9 +7,11 @@
  * Bouton "Charger" → injecte la route dans la progression principale.
  */
 
-import { useState, useRef, useEffect } from 'react';
-import { X, ChevronDown, ExternalLink, Zap, RotateCcw } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { X, ExternalLink, Zap, RotateCcw, Info } from 'lucide-react';
 import { generateRoutes } from '../engine/RouteEngine';
+import { playChord } from '../engine/AudioEngine';
+import { buildVoicedChord } from '../engine/ChordEngine';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -89,39 +91,83 @@ function ChordPopover({ transition, targetChord, onClose }) {
 // ─── A single chord pill in a route ─────────────────────────────────────────
 
 function ChordPill({ chord, transition, nextChord, isEndpoint }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]       = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const clickTimer            = useRef(null);
 
+  // Play the chord (single click / tap)
+  async function handlePlay() {
+    if (playing) return;
+    setPlaying(true);
+    try {
+      const voicing = buildVoicedChord(chord, 'C4');
+      await playChord(voicing, '2n');
+    } catch (_) { /* sampler may not be ready */ }
+    setPlaying(false);
+  }
+
+  // Distinguish single click (play) from double click (open popover)
+  function handleClick() {
+    if (clickTimer.current) {
+      // Double click
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      setOpen(v => !v);
+    } else {
+      clickTimer.current = setTimeout(() => {
+        clickTimer.current = null;
+        handlePlay();
+      }, 220);
+    }
+  }
+
+  // Endpoint (first/last chord): just play on click, no popover
   if (isEndpoint) {
     return (
       <div className="flex flex-col items-center gap-1">
-        <div className="px-3 py-2 rounded-xl border-2 border-jazz-accent bg-jazz-card
-                        text-jazz-accent font-bold text-sm min-w-[56px] text-center">
+        <button
+          onClick={handlePlay}
+          className={`px-3 py-2 rounded-xl border-2 border-jazz-accent bg-jazz-card
+                      text-jazz-accent font-bold text-sm min-w-[56px] text-center
+                      transition-all active:scale-95
+                      ${playing ? 'brightness-150 scale-105' : 'hover:brightness-110'}`}
+          title="Cliquer pour jouer"
+        >
           {chord}
-        </div>
+        </button>
       </div>
     );
   }
 
   return (
     <div className="relative flex flex-col items-center gap-1">
+      {/* Pill: single click = play, double click = open explanation */}
       <button
-        onClick={() => setOpen(v => !v)}
-        className="px-3 py-2 rounded-xl border text-sm font-semibold min-w-[56px] text-center
-                   transition-all active:scale-95 hover:brightness-110"
+        onClick={handleClick}
+        className={`px-3 py-2 rounded-xl border text-sm font-semibold min-w-[56px] text-center
+                    transition-all active:scale-95
+                    ${playing ? 'brightness-150 scale-105' : 'hover:brightness-110'}`}
         style={{
           borderColor: transition?.color ?? '#2e2e3a',
-          background: `${transition?.color ?? '#2e2e3a'}22`,
+          background: `${transition?.color ?? '#2e2e3a'}${playing ? '55' : '22'}`,
           color: transition?.color ?? '#fff',
         }}
+        title="Clic = jouer · Double-clic = explication"
       >
         {chord}
       </button>
 
-      {/* Approach type label */}
+      {/* Approach label + info button (tap-friendly on mobile) */}
       {transition && (
-        <span className="text-[9px] text-jazz-muted leading-none text-center max-w-[64px] truncate">
-          {transition.label}
-        </span>
+        <button
+          onClick={() => setOpen(v => !v)}
+          className="flex items-center gap-0.5 text-[9px] text-jazz-muted hover:text-white
+                     leading-none text-center max-w-[72px] transition-colors"
+          title="Voir l'explication théorique"
+        >
+          <Info size={9} className="flex-shrink-0" />
+          <span className="truncate">{transition.label}</span>
+        </button>
       )}
 
       {open && transition && (
