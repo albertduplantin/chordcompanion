@@ -375,6 +375,7 @@ export default function App() {
 
       <footer className="border-t border-jazz-border px-6 py-3 text-center text-xs text-jazz-muted">
         Piano Vibe Chord Companion — React + Tailwind + Tone.js + Tonal.js
+        <span className="ml-3 px-2 py-0.5 rounded bg-jazz-accent text-black font-bold">TEST v2</span>
       </footer>
     </div>
   );
