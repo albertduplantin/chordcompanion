@@ -203,7 +203,6 @@ function isValid(sym) {
  *  - Reward ii-V pair at the end
  */
 function scoreRoute(route) {
-  const intermediate = route.chords.slice(1, -1);
   let score = 100;
 
   // Penalise duplicates
@@ -213,20 +212,45 @@ function scoreRoute(route) {
     seen.add(ch);
   }
 
-  // Reward V7 or SubV7 as the last intermediate chord
+  // Mild reward for strong final approach (don't overweight)
   const lastTransition = route.transitions[route.transitions.length - 1];
-  if (lastTransition?.id === 'V7')    score += 20;
-  if (lastTransition?.id === 'SubV7') score += 15;
-  if (lastTransition?.id === 'iim7')  score += 5;
+  if (lastTransition?.id === 'V7')    score += 8;
+  if (lastTransition?.id === 'SubV7') score += 6;
+  if (lastTransition?.id === 'dim7')  score += 4;
 
-  // Reward ii-V pair at end (penultimate = iim7, last = V7)
+  // Mild reward for ii-V pair at end
   if (route.transitions.length >= 2) {
     const t1 = route.transitions[route.transitions.length - 2];
     const t2 = route.transitions[route.transitions.length - 1];
-    if (t1?.id === 'iim7' && t2?.id === 'V7') score += 20;
+    if (t1?.id === 'iim7' && t2?.id === 'V7') score += 8;
   }
 
   return score;
+}
+
+/**
+ * Enforce route diversity: among all routes that share the same
+ * last-2-intermediate-chords suffix, keep at most `maxPerSuffix`.
+ * This prevents all routes from converging to the same ii-V ending.
+ */
+function diversifyRoutes(routes, maxRoutes, maxPerSuffix = 2) {
+  const groups = new Map();
+  for (const route of routes) {
+    const intermediates = route.chords.slice(1, -1);
+    // Key on last 2 intermediate chords (or all if fewer)
+    const suffix = intermediates.slice(-2).join('|');
+    if (!groups.has(suffix)) groups.set(suffix, []);
+    groups.get(suffix).push(route);
+  }
+
+  const result = [];
+  for (const group of groups.values()) {
+    result.push(...group.slice(0, maxPerSuffix));
+  }
+
+  return result
+    .sort((a, b) => b.score - a.score)
+    .slice(0, maxRoutes);
 }
 
 /**
@@ -288,7 +312,7 @@ export function generateRoutes(fromChord, toChord, numIntermediate, maxRoutes = 
     }
   }
 
-  // Score and deduplicate
+  // Deduplicate by full chord sequence
   const seen = new Set();
   const unique = [];
   for (const r of routes) {
@@ -300,7 +324,6 @@ export function generateRoutes(fromChord, toChord, numIntermediate, maxRoutes = 
     }
   }
 
-  return unique
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxRoutes);
+  // Apply diversity filter to avoid all routes sharing the same ending
+  return diversifyRoutes(unique, maxRoutes);
 }
