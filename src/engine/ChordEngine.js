@@ -48,104 +48,147 @@ export function getChordMeta(chordSymbol) {
   return { root, notes, third, seventh, symbol: chordSymbol, name: chord.name };
 }
 
+// ─── Internal voicing helpers ────────────────────────────────────────────────
+
+/** Nearest MIDI ≥ floor whose chroma matches pc */
+function firstMidiAtOrAbove(pc, floor) {
+  const targetChroma = Note.chroma(pc);
+  const diff = (targetChroma - (floor % 12) + 12) % 12;
+  return floor + diff;
+}
+
+/** Nearest MIDI strictly above lastMidi whose chroma matches pc */
+function firstMidiStrictlyAbove(pc, lastMidi) {
+  const targetChroma = Note.chroma(pc);
+  let diff = (targetChroma - (lastMidi % 12) + 12) % 12;
+  if (diff === 0) diff = 12; // same chroma → go up an octave
+  return lastMidi + diff;
+}
+
+function makeNote(pc, midi) {
+  const noteName = Note.fromMidi(midi);
+  return { pc, octave: Note.octave(noteName) ?? 4, midi };
+}
+
+/** Build a voiced chord ascending from startMidi, using the given pitch-class order */
+function buildAscending(pitchClasses, startMidi) {
+  if (!pitchClasses.length) return [];
+  const voiced = [];
+  let midi = firstMidiAtOrAbove(pitchClasses[0], startMidi);
+  voiced.push(makeNote(pitchClasses[0], midi));
+  for (let i = 1; i < pitchClasses.length; i++) {
+    midi = firstMidiStrictlyAbove(pitchClasses[i], midi);
+    voiced.push(makeNote(pitchClasses[i], midi));
+  }
+  return voiced;
+}
+
+/**
+ * Generate candidate voicings for a chord:
+ *   - All inversions (rotations of pitch classes) across octaves 2–5
+ *   - Drop-2 variant of each (2nd note from top dropped an octave)
+ *   - Drop-3 variant of each (3rd note from top dropped an octave, 4-voice chords only)
+ * Returns an array of voiced-note arrays.
+ */
+function generateVoicings(chordSymbol) {
+  const chord = Chord.get(chordSymbol);
+  if (!chord || chord.empty) return [];
+  const pcs = chord.notes;
+  if (pcs.length === 0) return [];
+
+  const MIN_BOT = 40; // E2 — below this sounds muddy
+  const MAX_TOP = 84; // C6 — above this sounds shrill
+
+  const candidates = [];
+
+  for (let rotation = 0; rotation < pcs.length; rotation++) {
+    const rotated = [...pcs.slice(rotation), ...pcs.slice(0, rotation)];
+    const basePc   = rotated[0];
+
+    for (let oct = 2; oct <= 5; oct++) {
+      const startMidi = Note.midi(`${basePc}${oct}`);
+      if (startMidi == null) continue;
+      if (startMidi < MIN_BOT) continue;
+
+      // ① 4-way close (closed position)
+      const close = buildAscending(rotated, startMidi);
+      if (close[close.length - 1].midi > MAX_TOP) continue;
+      candidates.push(close);
+
+      // ② Drop-2: lower the 2nd note from the top by one octave
+      if (close.length >= 3) {
+        const di = close.length - 2;
+        const d2 = close
+          .map((n, i) => i === di ? { ...n, midi: n.midi - 12, octave: n.octave - 1 } : n)
+          .sort((a, b) => a.midi - b.midi);
+        if (d2[0].midi >= MIN_BOT - 12) candidates.push(d2);
+      }
+
+      // ③ Drop-3: lower the 3rd note from the top by one octave (4+ voice chords)
+      if (close.length >= 4) {
+        const di = close.length - 3;
+        const d3 = close
+          .map((n, i) => i === di ? { ...n, midi: n.midi - 12, octave: n.octave - 1 } : n)
+          .sort((a, b) => a.midi - b.midi);
+        if (d3[0].midi >= MIN_BOT - 12) candidates.push(d3);
+      }
+    }
+  }
+
+  return candidates;
+}
+
+/** Total absolute MIDI displacement between two voicings (matched by rank) */
+function scoreVoicing(candidate, prevVoicing) {
+  if (!prevVoicing.length) return 0;
+  const a = [...prevVoicing].sort((x, y) => x.midi - y.midi);
+  const b = [...candidate].sort((x, y) => x.midi - y.midi);
+  const len = Math.min(a.length, b.length);
+  let total = 0;
+  for (let i = 0; i < len; i++) total += Math.abs(b[i].midi - a[i].midi);
+  return total;
+}
+
 // ─── Build a voiced chord: notes with octave numbers ────────────────────────
-// We spread the chord across octaves 3–5, starting near a reference MIDI note.
 
 export function buildVoicedChord(chordSymbol, referenceNote = 'C4') {
   const chord = Chord.get(chordSymbol);
   if (!chord || chord.empty) return [];
+  const pcs = chord.notes;
+  if (pcs.length === 0) return [];
 
   const refMidi = Note.midi(referenceNote) ?? 60;
-  const pitchClasses = chord.notes; // e.g. ['C', 'E', 'G', 'B']
-
-  if (pitchClasses.length === 0) return [];
-
-  // Find the best starting octave so the root is close to the reference
-  const rootChroma = Note.chroma(pitchClasses[0]) ?? 0;
-  const refChroma = Note.chroma(referenceNote) ?? 0;
-  const refOctave = Note.octave(referenceNote) ?? 4;
-
-  // Rough starting octave for root
-  let rootOctave = refOctave;
-  const rootMidiAtOctave = Note.midi(`${pitchClasses[0]}${rootOctave}`) ?? 60;
-  if (rootMidiAtOctave < refMidi - 6) rootOctave += 1;
-  if (rootMidiAtOctave > refMidi + 6) rootOctave -= 1;
-
-  // Build ascending from the root
-  const voiced = [];
-  let lastMidi = Note.midi(`${pitchClasses[0]}${rootOctave}`) ?? 48;
-  voiced.push({ pc: pitchClasses[0], octave: rootOctave, midi: lastMidi });
-
-  for (let i = 1; i < pitchClasses.length; i++) {
-    const pc = pitchClasses[i];
-    let octave = rootOctave;
-    let midi = Note.midi(`${pc}${octave}`) ?? 0;
-
-    // Make sure each note is above the previous
-    while (midi <= lastMidi) {
-      octave += 1;
-      midi = Note.midi(`${pc}${octave}`) ?? 0;
-    }
-
-    voiced.push({ pc, octave, midi });
-    lastMidi = midi;
-  }
-
-  return voiced;
+  // Place root of the chord near the reference note
+  const startMidi = firstMidiAtOrAbove(pcs[0], refMidi - 6);
+  return buildAscending(pcs, startMidi);
 }
 
 // ─── Voice Leading: find closest voicing to previous chord ──────────────────
-// Returns voiced notes shifted so the total distance from prev voicing is min.
+// Considers all inversions + drop-2 + drop-3 and picks minimum total movement.
 
 export function closestVoicing(chordSymbol, prevVoicing = []) {
   const chord = Chord.get(chordSymbol);
   if (!chord || chord.empty) return [];
-
-  const pitchClasses = chord.notes;
-  if (pitchClasses.length === 0) return [];
+  const pcs = chord.notes;
+  if (pcs.length === 0) return [];
 
   if (prevVoicing.length === 0) {
-    // No reference: build default around C4
-    return buildVoicedChord(chordSymbol, 'C4');
+    // Default: root position around C3
+    return buildAscending(pcs, firstMidiAtOrAbove(pcs[0], 48));
   }
 
-  // Anchor: use the average MIDI of previous voicing as center
-  const avgMidi = prevVoicing.reduce((s, n) => s + n.midi, 0) / prevVoicing.length;
+  const candidates = generateVoicings(chordSymbol);
+  if (candidates.length === 0) return buildVoicedChord(chordSymbol);
 
-  // For each pitch class, find the nearest instance to its "ideal" position
-  // Strategy: build chord ascending from the note nearest to prevVoicing[0]
-  const refMidi = prevVoicing[0]?.midi ?? 60;
-  const rootPc = pitchClasses[0];
+  let best = candidates[0];
+  let bestScore = scoreVoicing(candidates[0], prevVoicing);
 
-  // Find closest octave for root
-  let bestRootMidi = null;
-  let bestDiff = Infinity;
-  for (let oct = 2; oct <= 6; oct++) {
-    const m = Note.midi(`${rootPc}${oct}`);
-    if (m != null) {
-      const diff = Math.abs(m - refMidi);
-      if (diff < bestDiff) { bestDiff = diff; bestRootMidi = m; }
-    }
+  for (let i = 1; i < candidates.length; i++) {
+    const score = scoreVoicing(candidates[i], prevVoicing);
+    if (score < bestScore) { bestScore = score; best = candidates[i]; }
   }
 
-  // Build chord ascending from bestRootMidi
-  const voiced = [];
-  const rootNote = Note.fromMidi(bestRootMidi);
-  const rootOctave = Note.octave(rootNote);
-
-  let lastMidi = bestRootMidi;
-  voiced.push({ pc: rootPc, octave: rootOctave, midi: bestRootMidi });
-
-  for (let i = 1; i < pitchClasses.length; i++) {
-    const pc = pitchClasses[i];
-    let octave = rootOctave;
-    let midi = Note.midi(`${pc}${octave}`) ?? 0;
-    while (midi <= lastMidi) { octave += 1; midi = Note.midi(`${pc}${octave}`) ?? 0; }
-    voiced.push({ pc, octave, midi });
-    lastMidi = midi;
-  }
-
-  return voiced;
+  return best;
 }
 
 // ─── Role of each note in the chord (root / third / seventh / other) ─────────
